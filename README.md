@@ -1,3 +1,20 @@
+original
+
+```plain
+PHASE 1
+      baseline(ms):        1421.188860
+     optimized(ms):        1305.053860
+      acceleration:           1.088989 x
+PHASE 2
+      baseline(ms):       16455.893631
+     optimized(ms):        8673.990004
+      acceleration:           1.897154 x
+TOTALs
+      baseline(ms):       17877.082491
+     optimized(ms):        9979.043864
+      acceleration:           1.791462 x
+```
+
 # 七边形 2024 年春季招新题目！
 
 嗨，欢迎来做七边形的招新题！
