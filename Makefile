@@ -1,4 +1,4 @@
-CXXFLAGS=-fopenmp -Ofast -Wall -Wextra -Wshadow  -pipe
+CXXFLAGS=-fopenmp -march=native -Ofast -Wall -Wextra -Wshadow  -pipe
 
 all: main
 
