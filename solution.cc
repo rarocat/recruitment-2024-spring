@@ -13,8 +13,9 @@ void optimized_pre_phase2(size_t) {}
 
 void optimized_post_phase2() {}
 
-void merge_sort(float *data, float *aux, const size_t size) {
-    if (size < 2) {
+void merge_sort(float *data, float *aux, const size_t size, const size_t depth) {
+    if (depth >= 8) {
+        std::sort(data, data + size);
         return;
     }
 
@@ -24,8 +25,14 @@ void merge_sort(float *data, float *aux, const size_t size) {
     float *right = data + left_len;
     const size_t right_len = size - left_len;
 
-    merge_sort(left, aux, left_len);
-    merge_sort(right, aux + left_len, right_len);
+#pragma omp taskgroup
+    {
+#pragma omp task untied
+        merge_sort(left, aux, left_len, depth + 1);
+#pragma omp task untied
+        merge_sort(right, aux + left_len, right_len, depth + 1);
+#pragma omp taskyield
+    }
 
     size_t l = 0, r = 0;
     size_t cnt = 0;
@@ -45,7 +52,9 @@ void merge_sort(float *data, float *aux, const size_t size) {
 
 void optimized_do_phase1(float* data, size_t size) {
     auto aux = (float *)malloc(sizeof(float) * size);
-    merge_sort(data, aux, size);
+#pragma omp parallel
+#pragma omp single
+    merge_sort(data, aux, size, 0);
     free(aux);
 }
 
