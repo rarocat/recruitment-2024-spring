@@ -1,4 +1,4 @@
-CXXFLAGS=-Ofast -Wall -Wextra -Wshadow  -pipe
+CXXFLAGS=-fopenmp -Ofast -Wall -Wextra -Wshadow  -pipe
 
 all: main
 
