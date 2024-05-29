@@ -1,6 +1,8 @@
 #include <cstdio>
+#include <cstring>
 #include <cstddef>
 #include <cstdlib>
+#include <algorithm>
 #include <immintrin.h>
 
 void optimized_pre_phase1(size_t) {}
@@ -11,12 +13,40 @@ void optimized_pre_phase2(size_t) {}
 
 void optimized_post_phase2() {}
 
-static int cmp(void const* a, void const* b) {
-    return *(float*)a < *(float*)b ? -1 : 1;
+void merge_sort(float *data, float *aux, const size_t size) {
+    if (size < 2) {
+        return;
+    }
+
+    float *left = data;
+    const size_t left_len = size / 2;
+
+    float *right = data + left_len;
+    const size_t right_len = size - left_len;
+
+    merge_sort(left, aux, left_len);
+    merge_sort(right, aux + left_len, right_len);
+
+    size_t l = 0, r = 0;
+    size_t cnt = 0;
+
+    while (l < left_len && r < right_len) {
+        if (left[l] < right[r]) {
+            aux[cnt++] = left[l++];
+        } else {
+            aux[cnt++] = right[r++];
+        }
+    }
+
+    memcpy(aux + cnt, left + l, sizeof(float) * (left_len - l));
+    memcpy(aux + cnt + left_len - l, right + r, sizeof(float) * (right_len - r));
+    memcpy(data, aux, sizeof(float) * size);
 }
 
 void optimized_do_phase1(float* data, size_t size) {
-    qsort(data, size, sizeof(data[0]), cmp);
+    auto aux = (float *)malloc(sizeof(float) * size);
+    merge_sort(data, aux, size);
+    free(aux);
 }
 
 #define BATCH_SIZE 8
