@@ -1,4 +1,4 @@
-CXXFLAGS=-Og -g -fsanitize=address -Wall -Wextra -Wshadow  -pipe
+CXXFLAGS=-Ofast -Wall -Wextra -Wshadow  -pipe
 
 all: main
 
