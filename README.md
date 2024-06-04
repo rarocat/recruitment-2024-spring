@@ -1,19 +1,91 @@
-original
+# 喵喵
+
+喵喵，我是南一集群里的赛博猫猫喵，听说七边形最近在招新喵，还有好玩的题目喵。
+
+前几天被一个赛博火柴人先生发现了喵，他说如果我来做他出的题目，他就会从总线的数据长河里给我捞赛博小鱼吃喵，不过我很怀疑他的技术到底能不能抓到小鱼喵。
+
+不过还是先做做题目喵
+
+下面测的加速比都是用那个很简单的测试工具，hyperfine 测出来的喵。它只能测量程序整体的运行时间，并不能测量某个函数运行的时间喵，所以数据生成与输入输出的时间都被算进去了喵，测量结果会偏小喵。
+
+## 喵译器选项优化
+
+<https://github.com/rarocat/recruitment-2024-spring/commit/7ed318b28655977c304d59c5f29ecc2779c335c7>
+
+我们观察 Makefile 会发现，默认的编译参数是用了 `-Og -g` 喵，这关掉了很多优化选项喵，改成 `-Ofast` 之后程序就变快了喵。
+
+然后我们发现还有 `-fsanitize=address` 喵，这个选项会在程序中插入许多小小猫猫，在程序运行时检查有没有非法内存访问的问题喵，很显然这会有性能损耗，所以要关掉喵。
+
+这样我们相比 baseline 就有 2x 的优化了喵
+
+## 使用 OpenMP 并喵计算库
+
+<https://github.com/rarocat/recruitment-2024-spring/commit/ed939920d5ef4df1aa04f82be9608ee38656b7cc>
+
+OpenMP 是一个很好用的并行计算库，只要几行编译器指令就能自动把循环并行执行喵，这种简单好用代码量少的偷懒库最棒的喵。
+
+我们只改了加了一行 `#pragma` 语句，再加了个编译选项，就让程序变快了 10x 喵。
+
+| Command | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `./before.out` | 48.812 ± 0.789 | 47.923 | 50.183 | 10.49 ± 0.18 |
+| `./after.out` | 4.654 ± 0.026 | 4.616 | 4.694 | 1.00 |
+
+## 使用 SIMD 指令喵化
+
+<https://github.com/rarocat/recruitment-2024-spring/commit/4d7f8a9340e0fd5d0b4d9f66368edb3e4c4b1afc>
+
+SIMD 指令可以一次处理很多数据，这里我们用 AVX512 指令在一个循环内处理 8 个查询喵。使用 SIMD 指令减少了指令数量、消除了二分循环体中的条件分支、顺便循环控制开销，相当划算喵。
+
+| Command | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `./before.out` | 4.651 ± 0.028 | 4.613 | 4.696 | 1.33 ± 0.02 |
+| `./after.out` | 3.490 ± 0.035 | 3.452 | 3.572 | 1.00 |
+
+## 将 qsort 换成归并排喵
+
+<https://github.com/rarocat/recruitment-2024-spring/commit/9b74ed9049a6987121b634eef038f7c1cda715f9>
+
+标准库里的 qsort 使用的是快速排序喵，不仅需要传入函数指针，每次比较都需要一次函数调用，还没有做 std::sort 那样经过复杂的多个场景下的优化喵。这里我们手写一个归并排序把它换掉喵。
+
+为什么不手写快速排序喵？是因为快速排序没归并排序好写，局部性也没有归并排序好喵。
+
+| Command | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `./before.out` | 22.364 ± 0.122 | 22.288 | 22.704 | 1.11 ± 0.01 |
+| `./after.out` | 20.152 ± 0.216 | 20.025 | 20.619 | 1.00 |
+
+## 并行化的归并排喵
+
+<https://github.com/rarocat/recruitment-2024-spring/commit/ad27be6c31136557601e5e264f2d1a348a07c1b9>
+
+又到了 OpenMP 的魅力时刻喵，OpenMP 的 taskgroup 特性就像 Rust 的 thread::scope 一样，可以在 taskgroup 内部派生很多线程，最后所有线程运行结束时 taskgroup 才会结束喵。我们这里用 taskgroup 来将归并排序并行化，实现了代码量超小但是效果拔群的并行排序喵。
+
+| Command | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `./before.out` | 20.184 ± 0.245 | 20.019 | 20.682 | 8.62 ± 0.13 |
+| `./after.out` | 2.342 ± 0.021 | 2.316 | 2.389 | 1.00 |
+
+## 喵喵
 
 ```plain
 PHASE 1
-      baseline(ms):        1421.188860
-     optimized(ms):        1305.053860
-      acceleration:           1.088989 x
+      baseline(ms):       30552.776700
+     optimized(ms):        1547.410123
+      acceleration:          19.744460 x
 PHASE 2
-      baseline(ms):       16455.893631
-     optimized(ms):        8673.990004
-      acceleration:           1.897154 x
+      baseline(ms):       90003.459322
+     optimized(ms):         434.982865
+      acceleration:         206.912655 x
 TOTALs
-      baseline(ms):       17877.082491
-     optimized(ms):        9979.043864
-      acceleration:           1.791462 x
+      baseline(ms):      120556.236022
+     optimized(ms):        1982.392988
+      acceleration:          60.813490 x
 ```
+
+最后怎么只优化了 60x 喵，机器上有 64 个核应该至少优化到 114514x 才好的喵，到底哪里写挂了喵
+
+EOF
 
 # 七边形 2024 年春季招新题目！
 
